@@ -189,6 +189,8 @@ async def estimate_from_transcript(
             rerank_top_n=settings.RERANK_TOP_N,
             distance_threshold=settings.RETRIEVAL_DISTANCE_THRESHOLD,
             rrf_k=settings.RRF_K,
+            vector_candidate_limit=settings.VECTOR_CANDIDATE_LIMIT,
+            lexical_candidate_limit=settings.LEXICAL_CANDIDATE_LIMIT,
             sectors=sectors,
         )
 

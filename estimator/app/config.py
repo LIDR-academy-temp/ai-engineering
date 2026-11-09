@@ -2,7 +2,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import model_validator
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -143,11 +143,17 @@ class Settings(BaseSettings):
     RERANKER_MODEL: str = "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1"
     # Recall width before reranking/fusion (recall-then-rerank): retrieve this many
     # candidates cheaply, then the cross-encoder rescores them down to RERANK_TOP_N.
-    RETRIEVAL_RECALL_TOP_K: int = 50
-    RERANK_TOP_N: int = 5
+    # Bounded so nobody can ask for thousands of candidates and turn the
+    # cross-encoder (O(candidates) forward passes) into a denial of service.
+    RETRIEVAL_RECALL_TOP_K: int = Field(default=50, ge=1, le=200)
+    RERANK_TOP_N: int = Field(default=5, ge=1, le=50)
     # RRF smoothing constant (Cormack et al. default). Larger = a document must
     # rank well in BOTH branches to win; smaller = a single #1 can dominate.
-    RRF_K: int = 60
+    RRF_K: int = Field(default=60, gt=0, le=1000)
+    # Candidates each hybrid branch returns BEFORE fusion; the fused ranking is
+    # then capped at RETRIEVAL_RECALL_TOP_K.
+    VECTOR_CANDIDATE_LIMIT: int = Field(default=50, ge=1, le=200)
+    LEXICAL_CANDIDATE_LIMIT: int = Field(default=50, ge=1, le=200)
 
     @model_validator(mode="after")
     def validate_at_least_one_api_key(self) -> "Settings":

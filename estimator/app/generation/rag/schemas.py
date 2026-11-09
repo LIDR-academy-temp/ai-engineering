@@ -202,6 +202,11 @@ class RetrievedChunk(BaseModel):
         "None when the chunk was not surfaced by the lexical branch. Never mixed "
         "with ``distance``.",
     )
+    rrf_score: float | None = Field(
+        default=None,
+        description="Reciprocal Rank Fusion score in hybrid mode (higher = better). "
+        "None in vector mode.",
+    )
 
 
 class RetrievalResult(BaseModel):

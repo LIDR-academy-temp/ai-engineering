@@ -65,6 +65,8 @@ async def search(request: Request, payload: RetrievalRequest) -> RetrievalResult
             rerank_top_n=settings.RERANK_TOP_N,
             distance_threshold=payload.distance_threshold,
             rrf_k=settings.RRF_K,
+            vector_candidate_limit=settings.VECTOR_CANDIDATE_LIMIT,
+            lexical_candidate_limit=settings.LEXICAL_CANDIDATE_LIMIT,
             sectors=payload.sectors,
             project_year_min=payload.project_year_min,
             project_year_max=payload.project_year_max,

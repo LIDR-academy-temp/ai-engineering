@@ -49,6 +49,8 @@ def generate_calls(monkeypatch):
             "RETRIEVAL_RECALL_TOP_K": 50,
             "RERANK_TOP_N": 5,
             "RRF_K": 60,
+            "VECTOR_CANDIDATE_LIMIT": 50,
+            "LEXICAL_CANDIDATE_LIMIT": 50,
         },
     )()
 
