@@ -13,7 +13,12 @@ from sqlalchemy import Integer, Row, cast, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.generation.rag.schemas import EmbeddedChunk
-from app.generation.rag.store.models import ChunkRow, DocumentRow, EMBEDDING_DIMENSIONS
+from app.generation.rag.store.models import (
+    EMBEDDING_DIMENSIONS,
+    TEXT_SEARCH_CONFIG,
+    ChunkRow,
+    DocumentRow,
+)
 
 # The structural chunker emits one chunk per budget component; the vocabulary
 # is queryable thanks to the index on ``chunk_type`` (live-session filters).
@@ -166,19 +171,25 @@ class ChunkStore:
     ) -> list[Row]:
         """Keyword (full-text) ranking over the ``content_tsv`` column (Session 10).
 
-        The lexical branch of hybrid search: ``plainto_tsquery`` turns the query
-        into a tsquery (AND of its lexemes, stop-words dropped), ``@@`` keeps only
-        chunks that match, and ``ts_rank_cd`` (cover-density) ranks them — higher
-        is better, opposite to vector distance. The ``english`` config MUST match
-        the generated column's config (migration 0003) or the GIN index is bypassed
-        and matching silently changes. Structural filters mirror ``search_filtered``
-        so the two branches see the same candidate space.
+        The lexical branch of hybrid search. ``websearch_to_tsquery`` turns the
+        raw user text into a tsquery and, unlike ``to_tsquery``, never raises on
+        arbitrary input: operators are only honoured in web-search syntax
+        (quotes, ``or``, ``-``), anything else is treated as plain words. The text
+        is always a BOUND parameter, never interpolated into the SQL. ``@@`` keeps
+        only matching chunks and ``ts_rank_cd`` (cover density) ranks them —
+        higher is better, the opposite direction of the vector distance.
 
-        Returns rows ascending-irrelevant→relevant is reversed: ordered by rank
-        DESC (most relevant first), capped at ``top_k``. ``rank`` rides along for
-        debugging; fusion only uses the ordering.
+        A query made only of stop-words yields an empty tsquery, which matches
+        nothing: the method then returns ``[]`` without error.
+
+        ``TEXT_SEARCH_CONFIG`` MUST match the generated column's config or the
+        GIN index is bypassed. Structural filters mirror ``search_filtered`` so
+        both branches see the same candidate space.
+
+        Returns rows ordered by rank DESC (most relevant first), capped at
+        ``top_k``; each row carries ``rank`` (the ``ts_rank_cd`` score).
         """
-        tsquery = func.plainto_tsquery("english", query_text)
+        tsquery = func.websearch_to_tsquery(TEXT_SEARCH_CONFIG, query_text)
         rank = func.ts_rank_cd(ChunkRow.content_tsv, tsquery)
 
         structural_filters = self._structural_filters(
@@ -199,7 +210,8 @@ class ChunkStore:
             )
             .where(ChunkRow.content_tsv.op("@@")(tsquery))
             .where(*structural_filters)
-            .order_by(rank.desc())
+            # chunk id as a deterministic tie-break for equal ranks.
+            .order_by(rank.desc(), ChunkRow.id)
             .limit(top_k)
         )
         return list((await session.execute(stmt)).all())

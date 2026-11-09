@@ -22,28 +22,12 @@ import time
 import structlog
 
 from app.generation.rag.errors import RetrievalError
+from app.generation.rag.retrieval.candidates import StructuralFilters, row_to_chunk
 from app.generation.rag.retrieval.fusion import reciprocal_rank_fusion
+from app.generation.rag.retrieval.lexical_search import lexical_search
 from app.generation.rag.schemas import RetrievalResult, RetrievedChunk
 
 log = structlog.get_logger()
-
-# Distance assigned to a candidate surfaced ONLY by the lexical branch (it never
-# entered the vector ranking, so it has no cosine distance). 1.0 = "far" in cosine
-# terms; it is a display/sentinel value — fusion and reranking ignore it.
-_NO_VECTOR_DISTANCE = 1.0
-
-
-def _row_to_chunk(row, *, distance: float) -> RetrievedChunk:
-    """Map a DB row (vector or lexical) onto the typed retrieval contract."""
-    return RetrievedChunk(
-        id=row.id,
-        content=row.content,
-        sector=str(row.metadata_.get("client_sector", "unknown")),
-        project_year=int(row.metadata_.get("year", 0)),
-        chunk_type=row.chunk_type,
-        distance=distance,
-        budget_id=row.metadata_.get("budget_id"),
-    )
 
 
 async def retrieve(
@@ -99,33 +83,43 @@ async def retrieve(
                 project_year_max=project_year_max,
                 chunk_types=chunk_types,
             )
-            lexical_rows = []
+            lexical_chunks: list[RetrievedChunk] = []
             if search_mode == "hybrid":
-                lexical_rows = await store.search_lexical(
+                lexical_chunks = await lexical_search(
                     session,
+                    store,
                     query_text=query_text,
-                    top_k=recall_k,
-                    sectors=sectors,
-                    project_year_min=project_year_min,
-                    project_year_max=project_year_max,
-                    chunk_types=chunk_types,
+                    limit=recall_k,
+                    filters=StructuralFilters(
+                        sectors=sectors,
+                        project_year_min=project_year_min,
+                        project_year_max=project_year_max,
+                        chunk_types=chunk_types,
+                    ),
                 )
     except Exception as exc:  # noqa: BLE001 — DB/connection failure.
-        log.error("rag_hybrid_search_failed", error_type=type(exc).__name__, error=str(exc)[:200])
+        # Only the error type: DB error messages can echo bound parameters (the
+        # user's query text), which must not reach the logs.
+        log.error("rag_hybrid_search_failed", error_type=type(exc).__name__)
         raise RetrievalError("Vector store query failed.") from exc
 
     # Build the candidate pool once (id → chunk); vector distance wins over the
     # lexical sentinel when an id is in both branches.
     candidates: dict[int, RetrievedChunk] = {}
     for row in vector_rows:
-        candidates[row.id] = _row_to_chunk(row, distance=float(row.distance))
-    for row in lexical_rows:
-        candidates.setdefault(row.id, _row_to_chunk(row, distance=_NO_VECTOR_DISTANCE))
+        candidates[row.id] = row_to_chunk(row, distance=float(row.distance))
+    for chunk in lexical_chunks:
+        if chunk.id in candidates:
+            candidates[chunk.id] = candidates[chunk.id].model_copy(
+                update={"lexical_score": chunk.lexical_score}
+            )
+        else:
+            candidates[chunk.id] = chunk
 
     # Recall ordering: RRF for hybrid, raw distance order for vector.
     if search_mode == "hybrid":
         fused = reciprocal_rank_fusion(
-            [[row.id for row in vector_rows], [row.id for row in lexical_rows]],
+            [[row.id for row in vector_rows], [chunk.id for chunk in lexical_chunks]],
             k=rrf_k,
         )
         ordered = [candidates[cid] for cid, _score in fused]
@@ -150,7 +144,7 @@ async def retrieve(
         search_mode=search_mode,
         rerank=rerank,
         vector_hits=len(vector_rows),
-        lexical_hits=len(lexical_rows),
+        lexical_hits=len(lexical_chunks),
         results=len(final),
         candidates_evaluated=candidates_evaluated,
         search_time_ms=elapsed_ms,

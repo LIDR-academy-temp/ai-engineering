@@ -40,6 +40,7 @@ def _row(chunk_id: int, *, distance: float = 0.3, budget_id: str | None = None):
             "budget_id": budget_id or f"BUD-{chunk_id}",
         },
         distance=distance,
+        rank=0.5,  # ts_rank_cd score when the row comes from the lexical branch
     )
 
 

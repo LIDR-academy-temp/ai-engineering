@@ -39,6 +39,12 @@ from app.foundation.persistence.models import Base
 
 EMBEDDING_DIMENSIONS = 1536  # text-embedding-3-small
 
+# Postgres text-search configuration shared by the generated ``content_tsv``
+# column (migration 0003) and the lexical query. They MUST match or the GIN
+# index is bypassed and matching silently changes. ``english`` because the
+# shipped corpus is in English (see the migration docstring for the rationale).
+TEXT_SEARCH_CONFIG = "english"
+
 
 class DocumentRow(Base):
     __tablename__ = "documents"
@@ -82,7 +88,7 @@ class ChunkRow(Base):
     # ``content``. ``english`` config matches the corpus (see migration 0003).
     content_tsv: Mapped[str | None] = mapped_column(
         TSVECTOR,
-        Computed("to_tsvector('english', content)", persisted=True),
+        Computed(f"to_tsvector('{TEXT_SEARCH_CONFIG}', content)", persisted=True),
         nullable=True,
     )
     metadata_: Mapped[dict] = mapped_column(
