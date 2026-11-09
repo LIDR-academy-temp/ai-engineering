@@ -1,7 +1,7 @@
 # Conclusiones — Sesión 10: búsqueda híbrida y reranking
 
-> **BORRADOR redactado por Claude. Pendiente de revisión y firma.**
-> Las etiquetas de relevancia del golden set también las propuso Claude (antes de ver ningún
+> **Pendiente de revisión y firma.**
+> Las etiquetas de relevancia del golden set las propuso Claude (antes de ver ningún
 > resultado de retrieval) y están **pendientes de revisión humana**. Si cambian, hay que volver
 > a ejecutar la evaluación y revisar estas conclusiones.
 
