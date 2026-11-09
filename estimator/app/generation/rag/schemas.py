@@ -207,6 +207,11 @@ class RetrievedChunk(BaseModel):
         description="Reciprocal Rank Fusion score in hybrid mode (higher = better). "
         "None in vector mode.",
     )
+    rerank_score: float | None = Field(
+        default=None,
+        description="Cross-encoder relevance score (higher = better). None when "
+        "reranking is off.",
+    )
 
 
 class RetrievalResult(BaseModel):

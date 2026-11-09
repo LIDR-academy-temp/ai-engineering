@@ -132,10 +132,11 @@ async def retrieve(
             from app.dependencies import get_reranker
 
             reranker = get_reranker()
-        recall_pool = pool[:recall_k]
-        final = await asyncio.to_thread(
-            reranker.rerank, query_text, recall_pool, top_n=rerank_top_n
-        )
+        # The cross-encoder scores against the SAME text the search used
+        # (``query_text``): in the estimate flow that is the reformulated,
+        # corpus-aligned search text, not the raw transcript — scoring the
+        # candidates against what they were recalled for keeps both stages aligned.
+        final = await _rerank(reranker, query_text, pool[:recall_k], top_n=rerank_top_n)
     else:
         final = pool[:top_k]
 
@@ -155,3 +156,38 @@ async def retrieve(
         low_confidence=not final,
         candidates_evaluated=candidates_evaluated,
     )
+
+
+async def _rerank(
+    reranker, query_text: str, candidates: list[RetrievedChunk], *, top_n: int
+) -> list[RetrievedChunk]:
+    """Cross-encoder stage: rescore ``candidates`` and keep the best ``top_n``.
+
+    Inference is synchronous and CPU-heavy, so it runs in a worker thread
+    (``asyncio.to_thread``) to keep the event loop free for other requests.
+    """
+    model = getattr(reranker, "model_name", type(reranker).__name__)
+    started = time.perf_counter()
+    try:
+        ranked = await asyncio.to_thread(
+            reranker.rerank_with_scores, query_text, candidates, top_n=top_n
+        )
+    except Exception as exc:
+        log.error(
+            "retrieval_stage_failed",
+            stage="rerank",
+            model=model,
+            error_type=type(exc).__name__,
+            duration_ms=int((time.perf_counter() - started) * 1000),
+        )
+        raise
+    final = [chunk.model_copy(update={"rerank_score": score}) for chunk, score in ranked]
+    log.info(
+        "retrieval_stage",
+        stage="rerank",
+        model=model,
+        candidates_in=len(candidates),
+        candidates_out=len(final),
+        duration_ms=int((time.perf_counter() - started) * 1000),
+    )
+    return final

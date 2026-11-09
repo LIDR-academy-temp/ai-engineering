@@ -64,12 +64,16 @@ class FakeStore:
 class FakeReranker:
     """Reorders candidates by a content→score map and cuts to top_n."""
 
+    model_name = "fake-cross-encoder"
+
     def __init__(self, scores_by_content):
         self.scores_by_content = scores_by_content
+        self.calls: list[int] = []
 
-    def rerank(self, query, candidates, *, top_n, text_of=lambda c: c.content):
-        ranked = sorted(candidates, key=lambda c: self.scores_by_content[text_of(c)], reverse=True)
-        return ranked[:top_n]
+    def rerank_with_scores(self, query, candidates, *, top_n, text_of=lambda c: c.content):
+        self.calls.append(len(candidates))
+        scored = [(c, self.scores_by_content[text_of(c)]) for c in candidates]
+        return sorted(scored, key=lambda pair: pair[1], reverse=True)[:top_n]
 
 
 @pytest.fixture

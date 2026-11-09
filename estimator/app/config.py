@@ -141,6 +141,11 @@ class Settings(BaseSettings):
     RERANKER_ENABLED: bool = False
     # Multilingual cross-encoder (ES+EN), small enough for CPU at teaching latency.
     RERANKER_MODEL: str = "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1"
+    # Load + warm up the cross-encoder ONCE in the app lifespan, so no request
+    # pays the model load (~seconds + ~500MB RAM). On by default because reranking
+    # can be switched on per request / at runtime even when RERANKER_ENABLED=false.
+    # The test suite turns it off (no torch weights in unit tests).
+    RERANKER_PRELOAD: bool = True
     # Recall width before reranking/fusion (recall-then-rerank): retrieve this many
     # candidates cheaply, then the cross-encoder rescores them down to RERANK_TOP_N.
     # Bounded so nobody can ask for thousands of candidates and turn the

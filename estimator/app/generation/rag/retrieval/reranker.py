@@ -14,21 +14,30 @@ recall width or the final cut — that orchestration lives in ``pipeline.retriev
 
 The model is multilingual (``cross-encoder/mmarco-mMiniLMv2-L12-H384-v1``) so it
 copes with the corpus regardless of the Spanish/English question, and it is small
-enough to run on CPU at teaching latencies. It loads LAZILY on first use: importing
-this module must stay cheap (tests, app startup) and must not require torch weights
-on disk until something actually reranks.
+enough to run on CPU at teaching latencies. Importing this module stays cheap (no
+torch at import time); the app LIFESPAN calls :meth:`CrossEncoderReranker.warmup`
+once at startup (``RERANKER_PRELOAD``), so requests never pay the model load. The
+lazy, lock-guarded load remains as a fallback (scripts, a failed preload).
 """
 
 from __future__ import annotations
 
 import threading
 import time
+from collections.abc import Callable, Sequence
+from typing import Any, TypeVar
 
 import structlog
 
 from app.config import get_settings
 
 log = structlog.get_logger()
+
+T = TypeVar("T")
+
+
+def _content_of(candidate: Any) -> str:
+    return candidate.content
 
 
 class CrossEncoderReranker:
@@ -51,9 +60,22 @@ class CrossEncoderReranker:
     def model_name(self) -> str:
         return self._model_name
 
+    @property
+    def is_loaded(self) -> bool:
+        """True once the model weights are in memory (surfaced by ``/health``)."""
+        return self._model is not None
+
     def load(self) -> None:
         """Force-load the model now (used by the verify script and warmup)."""
         self._ensure_loaded()
+
+    def warmup(self) -> None:
+        """Load the model and run one tiny inference.
+
+        The first ``predict`` pays one-off costs (graph/kernel initialisation), so
+        warming up at startup keeps them out of the first real request's latency.
+        """
+        self.score("warmup query", ["warmup document"])
 
     def _ensure_loaded(self):
         if self._model is not None:
@@ -94,21 +116,21 @@ class CrossEncoderReranker:
         )
         return [float(score) for score in scores]
 
-    def rerank(
+    def rerank_with_scores(
         self,
         query: str,
-        candidates: list,
+        candidates: Sequence[T],
         *,
         top_n: int,
-        text_of=lambda candidate: candidate.content,
-    ) -> list:
-        """Reorder ``candidates`` by cross-encoder score, keep the top ``top_n``.
+        text_of: Callable[[T], str] = _content_of,
+    ) -> list[tuple[T, float]]:
+        """Reorder ``candidates`` by cross-encoder score; keep the top ``top_n``.
 
         ``text_of`` extracts the document text from a candidate (default: a
         ``.content`` attribute) so this works for ORM rows, schema objects or
         plain dicts without coupling the reranker to any one shape. Order is
         stable for equal scores (Python's sort is stable and the candidates keep
-        their recall order).
+        their recall order). Returns ``(candidate, score)`` pairs, best first.
         """
         if not candidates:
             return []
@@ -118,4 +140,20 @@ class CrossEncoderReranker:
             key=lambda pair: pair[1],
             reverse=True,
         )
-        return [candidate for candidate, _score in ranked[:top_n]]
+        return ranked[:top_n]
+
+    def rerank(
+        self,
+        query: str,
+        candidates: Sequence[T],
+        *,
+        top_n: int,
+        text_of: Callable[[T], str] = _content_of,
+    ) -> list[T]:
+        """Same as :meth:`rerank_with_scores` but returns only the candidates."""
+        return [
+            candidate
+            for candidate, _score in self.rerank_with_scores(
+                query, candidates, top_n=top_n, text_of=text_of
+            )
+        ]

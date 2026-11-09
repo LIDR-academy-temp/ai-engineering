@@ -1,6 +1,12 @@
 from __future__ import annotations
 
-import pytest
+import os
+
+# Never load the cross-encoder (torch weights) in the unit suite: the app
+# lifespan preloads it by default. Must be set before app.config is imported.
+os.environ.setdefault("RERANKER_PRELOAD", "false")
+
+import pytest  # noqa: E402
 from fastapi.testclient import TestClient
 
 from app.dependencies import (

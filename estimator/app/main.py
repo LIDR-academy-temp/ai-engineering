@@ -1,3 +1,5 @@
+import asyncio
+
 import structlog
 from contextlib import asynccontextmanager
 from uuid import uuid4
@@ -63,6 +65,23 @@ async def lifespan(app: FastAPI):
         )
     except Exception as exc:  # noqa: BLE001
         log.error("catalog_load_failed", error=str(exc)[:400])
+    # Session 10: load + warm up the cross-encoder ONCE, here, so no request pays
+    # the model load. Off the event loop (torch load is blocking). A failure is
+    # logged and surfaced by /health (reranker.loaded=false) instead of crashing
+    # the service: vector/hybrid search keep working without the reranker.
+    if settings.RERANKER_PRELOAD:
+        from app.dependencies import get_reranker
+
+        reranker = get_reranker()
+        try:
+            await asyncio.to_thread(reranker.warmup)
+            log.info("reranker_ready", model=reranker.model_name)
+        except Exception as exc:  # noqa: BLE001
+            log.error(
+                "reranker_preload_failed",
+                model=reranker.model_name,
+                error_type=type(exc).__name__,
+            )
     log.info("application_started", environment=settings.APP_ENV)
     yield
     log.info("application_shutdown")
@@ -124,8 +143,14 @@ app.include_router(estimate_stages_router)
 async def health_check() -> dict:
     """Return service health status."""
     settings = get_settings()
+    from app.dependencies import get_reranker
+
+    # Reports readiness of the Session 10 cross-encoder without triggering a
+    # load. Liveness ("status") does not depend on it: retrieval works without it.
+    reranker = get_reranker()
     return {
         "status": "healthy",
         "version": "0.1.0",
         "environment": settings.APP_ENV,
+        "reranker": {"model": reranker.model_name, "loaded": reranker.is_loaded},
     }
