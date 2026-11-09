@@ -1,0 +1,42 @@
+[
+  {
+    "id": "q1",
+    "query": "Clinical trial electronic data capture (EDC) platform with CDISC export, GDPR pseudonymization of patient data and full audit trails.",
+    "relevant_document_ids": [
+      "BUD-2024-012"
+    ],
+    "notes": "Exact technical terms (EDC, CDISC, GDPR): the lexical branch should help. Same-sector distractors: telemedicine, pharmacy. | ANNOTATION: proposed by Claude (strict: same kind of project only), PENDING human review. Not relevant: BUD-2024-009 (telemedicine; only its GDPR consent/audit module overlaps), BUD-2024-002."
+  },
+  {
+    "id": "q2",
+    "query": "Smart-meter telemetry ingestion for a utility company with SCADA integration, grid load forecasting and demand-response events.",
+    "relevant_document_ids": [
+      "BUD-2024-015"
+    ],
+    "notes": "Exact technical terms (SCADA, smart meter, demand response). Distractor: factory IoT predictive maintenance shares 'telemetry'. | ANNOTATION: proposed by Claude (strict: same kind of project only), PENDING human review. Not relevant: BUD-2024-013 (factory IoT: telemetry ingestion overlaps but predictive maintenance is a different product)."
+  },
+  {
+    "id": "q3",
+    "query": "Online platform where third-party sellers are paid out after each order, with customer refunds and dispute handling.",
+    "relevant_document_ids": [
+      "BUD-2024-006"
+    ],
+    "notes": "Ambiguous / shared vocabulary (e-commerce vs payments): 'paid out', 'refunds', 'disputes' also fit a fintech payments gateway and a returns portal. Reranking should help. | ANNOTATION: proposed by Claude (strict: same kind of project only), PENDING human review. Not relevant: BUD-2024-003 (fintech payments gateway: refunds/payouts vocabulary only)."
+  },
+  {
+    "id": "q4",
+    "query": "Lending app for small businesses with automated credit scoring, KYC onboarding and electronic signature of loan contracts.",
+    "relevant_document_ids": [
+      "BUD-2024-002"
+    ],
+    "notes": "Fintech with acronyms (KYC). Distractors: mobile banking auth, robo-advisor. | ANNOTATION: proposed by Claude (strict: same kind of project only), PENDING human review. Not relevant: BUD-2024-006 (marketplace vendor KYC onboarding only)."
+  },
+  {
+    "id": "q5",
+    "query": "Last-mile grocery delivery service with delivery slot booking, driver route optimization and stock levels per dark store.",
+    "relevant_document_ids": [
+      "BUD-2024-007"
+    ],
+    "notes": "Logistics within e-commerce. Distractor: industrial warehouse management with AGV coordination. | ANNOTATION: proposed by Claude (strict: same kind of project only), PENDING human review. Not relevant: BUD-2024-014 (industrial warehouse/AGV), BUD-2024-005, BUD-2024-004, BUD-2024-016."
+  }
+]

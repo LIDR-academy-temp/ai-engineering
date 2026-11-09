@@ -1,0 +1,683 @@
+{
+  "generated_at": "2026-11-09T13:44:28.805706+00:00",
+  "golden_set": "golden_set.json",
+  "runs_per_query": 5,
+  "environment": {
+    "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.41",
+    "processor": "x86_64",
+    "cpu_count": 14,
+    "python": "3.11.18",
+    "torch": "2.10.0+cu128",
+    "torch_threads": 7,
+    "reranker_device": "cpu",
+    "reranker_model": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+    "embedding_model": "text-embedding-3-small",
+    "text_search_config": "english",
+    "recall_pool": 50,
+    "vector_candidate_limit": 50,
+    "lexical_candidate_limit": 50,
+    "rrf_k": 60,
+    "k": 5,
+    "chunk_types": [
+      "budget_component"
+    ]
+  },
+  "ceiling_precision_at_k_mean": 1.0,
+  "configs": {
+    "A": {
+      "search_mode": "vector",
+      "rerank": false,
+      "precision_at_k_mean": 0.92,
+      "distinct_relevant_docs_mean": 2,
+      "latency_p50_ms": 5.41,
+      "latency_p95_ms": 6.1,
+      "latency_samples": 25
+    },
+    "B": {
+      "search_mode": "hybrid",
+      "rerank": false,
+      "precision_at_k_mean": 0.92,
+      "distinct_relevant_docs_mean": 2,
+      "latency_p50_ms": 7.26,
+      "latency_p95_ms": 8.22,
+      "latency_samples": 25
+    },
+    "C": {
+      "search_mode": "vector",
+      "rerank": true,
+      "precision_at_k_mean": 0.68,
+      "distinct_relevant_docs_mean": 2,
+      "latency_p50_ms": 6456.72,
+      "latency_p95_ms": 7975.78,
+      "latency_samples": 25
+    },
+    "D": {
+      "search_mode": "hybrid",
+      "rerank": true,
+      "precision_at_k_mean": 0.68,
+      "distinct_relevant_docs_mean": 2,
+      "latency_p50_ms": 6511.9,
+      "latency_p95_ms": 7443.64,
+      "latency_samples": 25
+    }
+  },
+  "queries": {
+    "h1": {
+      "query": "A hospital group wants patients to book visits online and see their doctor over video, while readings from home health devices such as smartwatches raise alerts for the care team.",
+      "relevant_document_ids": [
+        "BUD-2024-009",
+        "BUD-2024-010"
+      ],
+      "ceiling_precision_at_k": 1.0,
+      "configs": {
+        "A": {
+          "precision_at_k": 1.0,
+          "relevant_chunks": 5,
+          "distinct_relevant_docs": 2,
+          "top_k_budget_ids": [
+            "BUD-2024-010",
+            "BUD-2024-010",
+            "BUD-2024-010",
+            "BUD-2024-009",
+            "BUD-2024-009"
+          ],
+          "top_k_chunk_ids": [
+            36,
+            35,
+            34,
+            32,
+            31
+          ],
+          "deterministic": true,
+          "latency_ms": [
+            5.95,
+            6.95,
+            6.12,
+            5.67,
+            5.67
+          ],
+          "latency_p50_ms": 5.95
+        },
+        "B": {
+          "precision_at_k": 1.0,
+          "relevant_chunks": 5,
+          "distinct_relevant_docs": 2,
+          "top_k_budget_ids": [
+            "BUD-2024-010",
+            "BUD-2024-010",
+            "BUD-2024-009",
+            "BUD-2024-009",
+            "BUD-2024-010"
+          ],
+          "top_k_chunk_ids": [
+            36,
+            35,
+            32,
+            30,
+            34
+          ],
+          "deterministic": true,
+          "latency_ms": [
+            7.21,
+            7.57,
+            7.28,
+            8.14,
+            7.39
+          ],
+          "latency_p50_ms": 7.39
+        },
+        "C": {
+          "precision_at_k": 1.0,
+          "relevant_chunks": 5,
+          "distinct_relevant_docs": 2,
+          "top_k_budget_ids": [
+            "BUD-2024-010",
+            "BUD-2024-010",
+            "BUD-2024-009",
+            "BUD-2024-009",
+            "BUD-2024-009"
+          ],
+          "top_k_chunk_ids": [
+            36,
+            35,
+            32,
+            31,
+            30
+          ],
+          "deterministic": true,
+          "latency_ms": [
+            2390.48,
+            2182.93,
+            2245.22,
+            2411.19,
+            2302.55
+          ],
+          "latency_p50_ms": 2302.55
+        },
+        "D": {
+          "precision_at_k": 1.0,
+          "relevant_chunks": 5,
+          "distinct_relevant_docs": 2,
+          "top_k_budget_ids": [
+            "BUD-2024-010",
+            "BUD-2024-010",
+            "BUD-2024-009",
+            "BUD-2024-009",
+            "BUD-2024-009"
+          ],
+          "top_k_chunk_ids": [
+            36,
+            35,
+            32,
+            31,
+            30
+          ],
+          "deterministic": true,
+          "latency_ms": [
+            6759.67,
+            7067.64,
+            6297.57,
+            6097.75,
+            7040.4
+          ],
+          "latency_p50_ms": 6759.67
+        }
+      }
+    },
+    "h2": {
+      "query": "Digital bank onboarding: verify the customer's identity, assess their creditworthiness, sign the contract electronically and link their accounts at other banks through open banking.",
+      "relevant_document_ids": [
+        "BUD-2024-001",
+        "BUD-2024-002"
+      ],
+      "ceiling_precision_at_k": 1.0,
+      "configs": {
+        "A": {
+          "precision_at_k": 1.0,
+          "relevant_chunks": 5,
+          "distinct_relevant_docs": 2,
+          "top_k_budget_ids": [
+            "BUD-2024-001",
+            "BUD-2024-002",
+            "BUD-2024-002",
+            "BUD-2024-002",
+            "BUD-2024-001"
+          ],
+          "top_k_chunk_ids": [
+            2,
+            7,
+            6,
+            5,
+            3
+          ],
+          "deterministic": true,
+          "latency_ms": [
+            5.75,
+            6.0,
+            5.46,
+            5.52,
+            5.05
+          ],
+          "latency_p50_ms": 5.52
+        },
+        "B": {
+          "precision_at_k": 0.8,
+          "relevant_chunks": 4,
+          "distinct_relevant_docs": 2,
+          "top_k_budget_ids": [
+            "BUD-2024-001",
+            "BUD-2024-002",
+            "BUD-2024-016",
+            "BUD-2024-001",
+            "BUD-2024-002"
+          ],
+          "top_k_chunk_ids": [
+            2,
+            7,
+            53,
+            3,
+            5
+          ],
+          "deterministic": true,
+          "latency_ms": [
+            7.34,
+            6.97,
+            6.82,
+            8.15,
+            6.82
+          ],
+          "latency_p50_ms": 6.97
+        },
+        "C": {
+          "precision_at_k": 0.4,
+          "relevant_chunks": 2,
+          "distinct_relevant_docs": 2,
+          "top_k_budget_ids": [
+            "BUD-2024-006",
+            "BUD-2024-004",
+            "BUD-2024-001",
+            "BUD-2024-002",
+            "BUD-2024-017"
+          ],
+          "top_k_chunk_ids": [
+            20,
+            15,
+            2,
+            7,
+            60
+          ],
+          "deterministic": true,
+          "latency_ms": [
+            5975.9,
+            7281.06,
+            9630.4,
+            6811.86,
+            6895.48
+          ],
+          "latency_p50_ms": 6895.48
+        },
+        "D": {
+          "precision_at_k": 0.4,
+          "relevant_chunks": 2,
+          "distinct_relevant_docs": 2,
+          "top_k_budget_ids": [
+            "BUD-2024-006",
+            "BUD-2024-004",
+            "BUD-2024-001",
+            "BUD-2024-002",
+            "BUD-2024-017"
+          ],
+          "top_k_chunk_ids": [
+            20,
+            15,
+            2,
+            7,
+            60
+          ],
+          "deterministic": true,
+          "latency_ms": [
+            7190.52,
+            7330.63,
+            6511.9,
+            6229.37,
+            6081.67
+          ],
+          "latency_p50_ms": 6511.9
+        }
+      }
+    },
+    "h3": {
+      "query": "Webshop for a fashion brand with a product catalogue, checkout and personalised suggestions, plus an easy way for customers to send clothes back so they can be inspected and resold.",
+      "relevant_document_ids": [
+        "BUD-2024-005",
+        "BUD-2024-008"
+      ],
+      "ceiling_precision_at_k": 1.0,
+      "configs": {
+        "A": {
+          "precision_at_k": 1.0,
+          "relevant_chunks": 5,
+          "distinct_relevant_docs": 2,
+          "top_k_budget_ids": [
+            "BUD-2024-008",
+            "BUD-2024-008",
+            "BUD-2024-008",
+            "BUD-2024-005",
+            "BUD-2024-005"
+          ],
+          "top_k_chunk_ids": [
+            27,
+            29,
+            28,
+            17,
+            16
+          ],
+          "deterministic": true,
+          "latency_ms": [
+            4.76,
+            5.3,
+            5.21,
+            4.96,
+            4.74
+          ],
+          "latency_p50_ms": 4.96
+        },
+        "B": {
+          "precision_at_k": 1.0,
+          "relevant_chunks": 5,
+          "distinct_relevant_docs": 2,
+          "top_k_budget_ids": [
+            "BUD-2024-005",
+            "BUD-2024-005",
+            "BUD-2024-008",
+            "BUD-2024-005",
+            "BUD-2024-008"
+          ],
+          "top_k_chunk_ids": [
+            16,
+            17,
+            27,
+            18,
+            29
+          ],
+          "deterministic": true,
+          "latency_ms": [
+            7.36,
+            6.63,
+            8.23,
+            6.98,
+            7.59
+          ],
+          "latency_p50_ms": 7.36
+        },
+        "C": {
+          "precision_at_k": 1.0,
+          "relevant_chunks": 5,
+          "distinct_relevant_docs": 2,
+          "top_k_budget_ids": [
+            "BUD-2024-005",
+            "BUD-2024-005",
+            "BUD-2024-005",
+            "BUD-2024-005",
+            "BUD-2024-008"
+          ],
+          "top_k_chunk_ids": [
+            16,
+            17,
+            18,
+            19,
+            29
+          ],
+          "deterministic": true,
+          "latency_ms": [
+            2429.45,
+            2124.9,
+            2353.72,
+            2242.32,
+            2514.14
+          ],
+          "latency_p50_ms": 2353.72
+        },
+        "D": {
+          "precision_at_k": 1.0,
+          "relevant_chunks": 5,
+          "distinct_relevant_docs": 2,
+          "top_k_budget_ids": [
+            "BUD-2024-005",
+            "BUD-2024-005",
+            "BUD-2024-005",
+            "BUD-2024-005",
+            "BUD-2024-008"
+          ],
+          "top_k_chunk_ids": [
+            16,
+            17,
+            18,
+            19,
+            29
+          ],
+          "deterministic": true,
+          "latency_ms": [
+            6272.56,
+            6766.17,
+            6264.64,
+            6049.3,
+            6088.26
+          ],
+          "latency_p50_ms": 6264.64
+        }
+      }
+    },
+    "h4": {
+      "query": "Strangler-fig migration off a COBOL mainframe ledger behind an anti-corruption layer, plus a new transaction ledger exposed through OAuth-secured APIs for the mobile app.",
+      "relevant_document_ids": [
+        "BUD-2024-001",
+        "BUD-2024-016"
+      ],
+      "ceiling_precision_at_k": 1.0,
+      "configs": {
+        "A": {
+          "precision_at_k": 0.6,
+          "relevant_chunks": 3,
+          "distinct_relevant_docs": 2,
+          "top_k_budget_ids": [
+            "BUD-2024-016",
+            "BUD-2024-016",
+            "BUD-2024-001",
+            "BUD-2024-003",
+            "BUD-2024-003"
+          ],
+          "top_k_chunk_ids": [
+            53,
+            54,
+            3,
+            11,
+            9
+          ],
+          "deterministic": true,
+          "latency_ms": [
+            5.21,
+            5.04,
+            5.24,
+            5.63,
+            5.1
+          ],
+          "latency_p50_ms": 5.21
+        },
+        "B": {
+          "precision_at_k": 1.0,
+          "relevant_chunks": 5,
+          "distinct_relevant_docs": 2,
+          "top_k_budget_ids": [
+            "BUD-2024-016",
+            "BUD-2024-001",
+            "BUD-2024-016",
+            "BUD-2024-001",
+            "BUD-2024-001"
+          ],
+          "top_k_chunk_ids": [
+            53,
+            3,
+            54,
+            1,
+            4
+          ],
+          "deterministic": true,
+          "latency_ms": [
+            6.93,
+            6.85,
+            7.26,
+            6.82,
+            6.34
+          ],
+          "latency_p50_ms": 6.85
+        },
+        "C": {
+          "precision_at_k": 0.6,
+          "relevant_chunks": 3,
+          "distinct_relevant_docs": 2,
+          "top_k_budget_ids": [
+            "BUD-2024-016",
+            "BUD-2024-016",
+            "BUD-2024-001",
+            "BUD-2024-003",
+            "BUD-2024-009"
+          ],
+          "top_k_chunk_ids": [
+            53,
+            54,
+            3,
+            11,
+            30
+          ],
+          "deterministic": true,
+          "latency_ms": [
+            7403.92,
+            7031.23,
+            6931.07,
+            7022.94,
+            6480.64
+          ],
+          "latency_p50_ms": 7022.94
+        },
+        "D": {
+          "precision_at_k": 0.6,
+          "relevant_chunks": 3,
+          "distinct_relevant_docs": 2,
+          "top_k_budget_ids": [
+            "BUD-2024-016",
+            "BUD-2024-016",
+            "BUD-2024-001",
+            "BUD-2024-003",
+            "BUD-2024-009"
+          ],
+          "top_k_chunk_ids": [
+            53,
+            54,
+            3,
+            11,
+            30
+          ],
+          "deterministic": true,
+          "latency_ms": [
+            6272.82,
+            6590.17,
+            7405.89,
+            6032.02,
+            6302.3
+          ],
+          "latency_p50_ms": 6302.3
+        }
+      }
+    },
+    "h5": {
+      "query": "Operations platform for a logistics site: track robots and trucks moving through the facility, schedule dock arrivals and predict machine failures from sensor readings.",
+      "relevant_document_ids": [
+        "BUD-2024-013",
+        "BUD-2024-014"
+      ],
+      "ceiling_precision_at_k": 1.0,
+      "configs": {
+        "A": {
+          "precision_at_k": 1.0,
+          "relevant_chunks": 5,
+          "distinct_relevant_docs": 2,
+          "top_k_budget_ids": [
+            "BUD-2024-014",
+            "BUD-2024-014",
+            "BUD-2024-014",
+            "BUD-2024-014",
+            "BUD-2024-013"
+          ],
+          "top_k_chunk_ids": [
+            48,
+            49,
+            46,
+            47,
+            44
+          ],
+          "deterministic": true,
+          "latency_ms": [
+            5.15,
+            5.41,
+            5.32,
+            5.84,
+            5.85
+          ],
+          "latency_p50_ms": 5.41
+        },
+        "B": {
+          "precision_at_k": 0.8,
+          "relevant_chunks": 4,
+          "distinct_relevant_docs": 2,
+          "top_k_budget_ids": [
+            "BUD-2024-014",
+            "BUD-2024-013",
+            "BUD-2024-013",
+            "BUD-2024-013",
+            "BUD-2024-015"
+          ],
+          "top_k_chunk_ids": [
+            48,
+            44,
+            43,
+            45,
+            52
+          ],
+          "deterministic": true,
+          "latency_ms": [
+            6.72,
+            6.6,
+            7.31,
+            8.37,
+            7.87
+          ],
+          "latency_p50_ms": 7.31
+        },
+        "C": {
+          "precision_at_k": 0.4,
+          "relevant_chunks": 2,
+          "distinct_relevant_docs": 2,
+          "top_k_budget_ids": [
+            "BUD-2024-013",
+            "BUD-2024-014",
+            "BUD-2024-015",
+            "BUD-2024-016",
+            "BUD-2024-004"
+          ],
+          "top_k_chunk_ids": [
+            44,
+            48,
+            51,
+            53,
+            14
+          ],
+          "deterministic": true,
+          "latency_ms": [
+            8118.74,
+            6800.22,
+            6886.5,
+            6456.72,
+            6232.99
+          ],
+          "latency_p50_ms": 6800.22
+        },
+        "D": {
+          "precision_at_k": 0.4,
+          "relevant_chunks": 2,
+          "distinct_relevant_docs": 2,
+          "top_k_budget_ids": [
+            "BUD-2024-013",
+            "BUD-2024-014",
+            "BUD-2024-015",
+            "BUD-2024-016",
+            "BUD-2024-004"
+          ],
+          "top_k_chunk_ids": [
+            44,
+            48,
+            51,
+            53,
+            14
+          ],
+          "deterministic": true,
+          "latency_ms": [
+            6372.63,
+            6713.79,
+            7605.32,
+            7453.07,
+            7261.17
+          ],
+          "latency_p50_ms": 7261.17
+        }
+      }
+    }
+  },
+  "anomalies": [
+    "h2: reranking worsened precision@5 (A 1.00 \u2192 C 0.40).",
+    "h2: reranking worsened precision@5 (B 0.80 \u2192 D 0.40).",
+    "h4: reranking worsened precision@5 (B 1.00 \u2192 D 0.60).",
+    "h5: reranking worsened precision@5 (A 1.00 \u2192 C 0.40).",
+    "h5: reranking worsened precision@5 (B 0.80 \u2192 D 0.40)."
+  ]
+}

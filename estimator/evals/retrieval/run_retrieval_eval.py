@@ -1,6 +1,6 @@
 """Reproducible retrieval evaluation of the four Session 10 configurations.
 
-    docker compose exec estimator python -m evals.retrieval.run_retrieval_eval [--runs N]
+    docker compose exec estimator python -m evals.retrieval.run_retrieval_eval \n        [--runs N] [--golden-set PATH]
 
 A = vector, B = hybrid, C = vector + rerank, D = hybrid + rerank. The script calls
 the retrieval pipeline directly (no HTTP API, no LLM, no estimate generation) over
@@ -35,6 +35,7 @@ import platform
 import statistics
 import time
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 
 from sqlalchemy import func, select
@@ -121,9 +122,9 @@ def environment(settings) -> dict[str, Any]:
     }
 
 
-async def evaluate(runs: int) -> dict[str, Any]:
+async def evaluate(runs: int, golden_set: Path = GOLDEN_SET_PATH) -> dict[str, Any]:
     settings = get_settings()
-    queries = load_golden_set()
+    queries = load_golden_set(golden_set)
     unlabeled = [q.id for q in queries if not q.relevant_document_ids]
     if unlabeled:
         raise SystemExit(f"Golden set not annotated yet (empty relevant ids): {unlabeled}")
@@ -177,7 +178,7 @@ async def evaluate(runs: int) -> dict[str, Any]:
 
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "golden_set": str(GOLDEN_SET_PATH.name),
+        "golden_set": golden_set.name,
         "runs_per_query": runs,
         "environment": environment(settings),
         "ceiling_precision_at_k_mean": statistics.mean(
@@ -309,11 +310,14 @@ def to_markdown(report: dict[str, Any]) -> str:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--runs", type=int, default=DEFAULT_RUNS, help="Measured runs per query.")
+    parser.add_argument(
+        "--golden-set", type=Path, default=GOLDEN_SET_PATH, help="Golden-set JSON to evaluate."
+    )
     args = parser.parse_args()
     if args.runs < 1:
         raise SystemExit("--runs must be >= 1")
 
-    report = asyncio.run(evaluate(args.runs))
+    report = asyncio.run(evaluate(args.runs, args.golden_set))
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     json_path = RESULTS_DIR / f"retrieval_eval_{stamp}.json"

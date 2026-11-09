@@ -14,10 +14,12 @@ Output: stdout + ``evals/retrieval/results/candidates_<timestamp>.md``.
 
 from __future__ import annotations
 
+import argparse
 import asyncio
 import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from pathlib import Path
 
 from sqlalchemy import select
 
@@ -26,6 +28,7 @@ from app.generation.rag.store.models import ChunkRow
 from evals.retrieval.common import (
     CHUNK_TYPES,
     CONFIGS,
+    GOLDEN_SET_PATH,
     K,
     RESULTS_DIR,
     embed_queries,
@@ -82,8 +85,8 @@ async def _all_base_budgets() -> dict[str, tuple[str, str]]:
         return budgets
 
 
-async def main() -> None:
-    queries = load_golden_set()
+async def main(golden_set: Path = GOLDEN_SET_PATH) -> None:
+    queries = load_golden_set(golden_set)
     get_reranker().warmup()
     embeddings = await embed_queries(queries)
     all_budgets = await _all_base_budgets()
@@ -127,4 +130,6 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    parser = argparse.ArgumentParser(description="List golden-set candidates.")
+    parser.add_argument("--golden-set", type=Path, default=GOLDEN_SET_PATH)
+    asyncio.run(main(parser.parse_args().golden_set))

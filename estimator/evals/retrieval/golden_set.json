@@ -1,42 +1,47 @@
 [
   {
-    "id": "q1",
-    "query": "Clinical trial electronic data capture (EDC) platform with CDISC export, GDPR pseudonymization of patient data and full audit trails.",
+    "id": "h1",
+    "query": "A hospital group wants patients to book visits online and see their doctor over video, while readings from home health devices such as smartwatches raise alerts for the care team.",
     "relevant_document_ids": [
-      "BUD-2024-012"
+      "BUD-2024-009",
+      "BUD-2024-010"
     ],
-    "notes": "Exact technical terms (EDC, CDISC, GDPR): the lexical branch should help. Same-sector distractors: telemedicine, pharmacy. | ANNOTATION: proposed by Claude (strict: same kind of project only), PENDING human review. Not relevant: BUD-2024-009 (telemedicine; only its GDPR consent/audit module overlaps), BUD-2024-002."
+    "notes": "Multi-relevant, paraphrased (no 'telemedicine', 'wearable', 'FHIR'). Same-sector traps: BUD-2024-011 pharmacy, BUD-2024-012 clinical trials. ANNOTATION: proposed by Claude before seeing any retrieval output (strict: same kind of project), PENDING human review."
   },
   {
-    "id": "q2",
-    "query": "Smart-meter telemetry ingestion for a utility company with SCADA integration, grid load forecasting and demand-response events.",
+    "id": "h2",
+    "query": "Digital bank onboarding: verify the customer's identity, assess their creditworthiness, sign the contract electronically and link their accounts at other banks through open banking.",
     "relevant_document_ids": [
-      "BUD-2024-015"
+      "BUD-2024-002",
+      "BUD-2024-001"
     ],
-    "notes": "Exact technical terms (SCADA, smart meter, demand response). Distractor: factory IoT predictive maintenance shares 'telemetry'. | ANNOTATION: proposed by Claude (strict: same kind of project only), PENDING human review. Not relevant: BUD-2024-013 (factory IoT: telemetry ingestion overlaps but predictive maintenance is a different product)."
+    "notes": "Multi-relevant fintech with shared vocabulary. Traps: BUD-2024-004 robo-advisor ('client onboarding and risk profiling'), BUD-2024-006 marketplace vendor KYC. ANNOTATION: proposed by Claude before seeing any retrieval output (strict: same kind of project), PENDING human review."
   },
   {
-    "id": "q3",
-    "query": "Online platform where third-party sellers are paid out after each order, with customer refunds and dispute handling.",
+    "id": "h3",
+    "query": "Webshop for a fashion brand with a product catalogue, checkout and personalised suggestions, plus an easy way for customers to send clothes back so they can be inspected and resold.",
     "relevant_document_ids": [
-      "BUD-2024-006"
+      "BUD-2024-005",
+      "BUD-2024-008"
     ],
-    "notes": "Ambiguous / shared vocabulary (e-commerce vs payments): 'paid out', 'refunds', 'disputes' also fit a fintech payments gateway and a returns portal. Reranking should help. | ANNOTATION: proposed by Claude (strict: same kind of project only), PENDING human review. Not relevant: BUD-2024-003 (fintech payments gateway: refunds/payouts vocabulary only)."
+    "notes": "Multi-relevant e-commerce. Traps: BUD-2024-017 bare-bones MVP (borderline, judged not relevant: no recommendations/returns), BUD-2024-006 marketplace refunds. ANNOTATION: proposed by Claude before seeing any retrieval output (strict: same kind of project), PENDING human review."
   },
   {
-    "id": "q4",
-    "query": "Lending app for small businesses with automated credit scoring, KYC onboarding and electronic signature of loan contracts.",
+    "id": "h4",
+    "query": "Strangler-fig migration off a COBOL mainframe ledger behind an anti-corruption layer, plus a new transaction ledger exposed through OAuth-secured APIs for the mobile app.",
     "relevant_document_ids": [
-      "BUD-2024-002"
+      "BUD-2024-016",
+      "BUD-2024-001"
     ],
-    "notes": "Fintech with acronyms (KYC). Distractors: mobile banking auth, robo-advisor. | ANNOTATION: proposed by Claude (strict: same kind of project only), PENDING human review. Not relevant: BUD-2024-006 (marketplace vendor KYC onboarding only)."
+    "notes": "Exact technical terms (COBOL, strangler, anti-corruption layer, OAuth): the lexical branch should help. Trap: BUD-2024-003 payments (settlement/ledger vocabulary). ANNOTATION: proposed by Claude before seeing any retrieval output (strict: same kind of project), PENDING human review."
   },
   {
-    "id": "q5",
-    "query": "Last-mile grocery delivery service with delivery slot booking, driver route optimization and stock levels per dark store.",
+    "id": "h5",
+    "query": "Operations platform for a logistics site: track robots and trucks moving through the facility, schedule dock arrivals and predict machine failures from sensor readings.",
     "relevant_document_ids": [
-      "BUD-2024-007"
+      "BUD-2024-014",
+      "BUD-2024-013"
     ],
-    "notes": "Logistics within e-commerce. Distractor: industrial warehouse management with AGV coordination. | ANNOTATION: proposed by Claude (strict: same kind of project only), PENDING human review. Not relevant: BUD-2024-014 (industrial warehouse/AGV), BUD-2024-005, BUD-2024-004, BUD-2024-016."
+    "notes": "Ambiguous industrial vs delivery logistics. Traps: BUD-2024-007 grocery route optimization, BUD-2024-015 grid monitoring. ANNOTATION: proposed by Claude before seeing any retrieval output (strict: same kind of project), PENDING human review."
   }
 ]
