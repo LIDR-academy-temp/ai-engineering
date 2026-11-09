@@ -13,6 +13,7 @@ from types import SimpleNamespace
 import pytest
 
 import app.dependencies as deps
+from app.generation.rag.errors import RetrievalError
 from app.generation.rag.retrieval.pipeline import retrieve
 
 
@@ -166,3 +167,133 @@ async def test_soft_fail_when_nothing_retrieved(wire):
     assert result.chunks == []
     assert result.low_confidence is True
     assert result.candidates_evaluated == 7
+
+
+class ExplodingReranker:
+    """A reranker that must never be called."""
+
+    model_name = "must-not-run"
+
+    def rerank_with_scores(self, *args, **kwargs):
+        raise AssertionError("reranker called with rerank=False")
+
+
+class FailingStore(FakeStore):
+    async def search_lexical(self, session, **kwargs):
+        raise ConnectionError("lexical branch down")
+
+
+async def test_rerank_disabled_returns_top_k_without_calling_reranker(wire):
+    store = FakeStore(vector_rows=[_row(i) for i in range(1, 8)], lexical_rows=[_row(9)])
+    wire(store)
+
+    for mode in ("vector", "hybrid"):
+        result = await retrieve(
+            query_embedding=[0.0] * 1536,
+            query_text="ecommerce checkout",
+            search_mode=mode,
+            rerank=False,
+            top_k=5,
+            reranker=ExplodingReranker(),
+        )
+        assert len(result.chunks) == 5
+        assert all(c.rerank_score is None for c in result.chunks)
+
+
+async def test_rerank_enabled_scores_the_whole_pool_and_returns_top_n(wire):
+    rows = [_row(i, distance=0.1 + i / 100) for i in range(1, 51)]
+    store = FakeStore(vector_rows=rows, lexical_rows=[])
+    wire(store)
+    # Reverse the recall order: the cross-encoder prefers the last candidates.
+    reranker = FakeReranker({f"chunk-{i}": float(i) for i in range(1, 51)})
+
+    result = await retrieve(
+        query_embedding=[0.0] * 1536,
+        query_text="ecommerce checkout",
+        search_mode="vector",
+        rerank=True,
+        top_k=5,
+        recall_k=50,
+        rerank_top_n=5,
+        reranker=reranker,
+    )
+
+    assert reranker.calls == [50]  # the full candidate pool reached the reranker
+    assert store.vector_calls[0]["top_k"] == 50  # recall wide before reranking
+    assert [c.id for c in result.chunks] == [50, 49, 48, 47, 46]
+    assert [c.rerank_score for c in result.chunks] == [50.0, 49.0, 48.0, 47.0, 46.0]
+
+
+async def test_hybrid_rerank_pool_is_the_fused_ranking_capped_at_recall_k(wire):
+    store = FakeStore(
+        vector_rows=[_row(i) for i in range(1, 31)],
+        lexical_rows=[_row(i) for i in range(21, 51)],
+    )
+    wire(store)
+    reranker = FakeReranker({f"chunk-{i}": float(i) for i in range(1, 51)})
+
+    await retrieve(
+        query_embedding=[0.0] * 1536,
+        query_text="ecommerce checkout",
+        search_mode="hybrid",
+        rerank=True,
+        recall_k=40,
+        rerank_top_n=5,
+        reranker=reranker,
+    )
+
+    assert reranker.calls == [40]  # 50 distinct fused ids, capped at the pool size
+
+
+async def test_hybrid_invokes_both_branches_and_exposes_scores(wire):
+    store = FakeStore(vector_rows=[_row(1), _row(2)], lexical_rows=[_row(2), _row(3)])
+    wire(store)
+
+    result = await retrieve(
+        query_embedding=[0.0] * 1536,
+        query_text="ecommerce checkout",
+        search_mode="hybrid",
+        rerank=False,
+        top_k=5,
+        vector_candidate_limit=7,
+        lexical_candidate_limit=9,
+    )
+
+    assert len(store.vector_calls) == 1 and len(store.lexical_calls) == 1
+    assert store.vector_calls[0]["top_k"] == 7
+    assert store.lexical_calls[0]["top_k"] == 9
+    by_id = {c.id: c for c in result.chunks}
+    assert result.chunks[0].id == 2  # found by both branches → fused first
+    assert by_id[2].distance == pytest.approx(0.3)  # keeps the real vector distance
+    assert by_id[2].lexical_score == pytest.approx(0.5)  # and the lexical score
+    assert by_id[1].lexical_score is None  # vector-only
+    assert by_id[3].distance == pytest.approx(1.0)  # lexical-only sentinel
+    assert all(c.rrf_score is not None for c in result.chunks)
+
+
+async def test_vector_mode_has_no_fusion_scores(wire):
+    store = FakeStore(vector_rows=[_row(1)], lexical_rows=[_row(1)])
+    wire(store)
+    result = await retrieve(
+        query_embedding=[0.0] * 1536, query_text="ecommerce checkout", search_mode="vector"
+    )
+    assert result.chunks[0].rrf_score is None
+    assert result.chunks[0].lexical_score is None
+
+
+async def test_a_failing_branch_is_raised_not_silently_dropped(wire):
+    wire(FailingStore(vector_rows=[_row(1)], lexical_rows=[]))
+    with pytest.raises(RetrievalError):
+        await retrieve(
+            query_embedding=[0.0] * 1536,
+            query_text="ecommerce checkout",
+            search_mode="hybrid",
+        )
+
+
+async def test_unknown_search_mode_is_rejected(wire):
+    wire(FakeStore(vector_rows=[], lexical_rows=[]))
+    with pytest.raises(ValueError):
+        await retrieve(
+            query_embedding=[0.0] * 1536, query_text="ecommerce checkout", search_mode="bm25"
+        )
