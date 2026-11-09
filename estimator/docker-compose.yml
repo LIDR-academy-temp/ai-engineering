@@ -33,6 +33,8 @@ services:
       - ./tests:/app/tests
       - ./data:/app/data
       - ./scripts:/app/scripts
+      # Session 10: retrieval evaluation (golden set + scripts, results written back).
+      - ./evals:/app/evals
       - ./alembic:/app/alembic
       - ./alembic.ini:/app/alembic.ini
 
