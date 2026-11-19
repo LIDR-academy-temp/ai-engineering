@@ -59,8 +59,13 @@ def generate_estimation(transcription: str) -> dict:
     except LLMServiceError:
         raise
     except Exception as exc:
-        log.error("llm_call_failed", error=str(exc), provider=settings.LLM_PROVIDER)
-        raise LLMServiceError(f"LLM call failed: {exc}") from exc
+        log.error(
+            "llm_call_failed",
+            error_type=type(exc).__name__,
+            status_code=getattr(exc, "status_code", None),
+            provider=settings.LLM_PROVIDER,
+        )
+        raise LLMServiceError("LLM call failed") from exc
 
 
 def _call_openai(messages: list[dict]) -> dict:
