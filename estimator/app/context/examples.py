@@ -135,6 +135,43 @@ ESTIMATION_EXAMPLES: list[dict] = [
 
 **12 weeks** with a three-person core development team.""",
     },
+    {
+        "meeting_summary": (
+            "The client needs a web portal where customers can sign in, view their invoices, "
+            "and download them as PDFs. An existing billing API provides invoice data and PDFs. "
+            "The portal must only show invoices that belong to the signed-in customer."
+        ),
+        "estimation": """\
+## Customer Invoice Portal
+
+### Task Breakdown
+
+| Task | Hours | Cost (EUR) |
+|------|------:|------------|
+| Requirements analysis and technical design | 12 | 750 |
+| UI/UX design for sign-in and invoice views | 8 | 400 |
+| Customer sign-in and invoice access controls | 16 | 1,000 |
+| Integration with the existing billing API | 18 | 1,125 |
+| Invoice list and PDF download | 20 | 1,250 |
+| Integration and access-control tests | 12 | 750 |
+| QA and bug fixing | 10 | 625 |
+| Deployment and handover documentation | 8 | 500 |
+
+### Totals
+
+- **Total hours:** 104
+- **Total cost:** 6,400 EUR
+
+### Recommended Team
+
+- 1 Full-Stack Developer
+- 1 UI/UX Designer (part-time during the first week)
+
+### Estimated Duration
+
+**3–4 weeks**, assuming billing API credentials and a test environment are available
+at project kickoff.""",
+    },
 ]
 
 
