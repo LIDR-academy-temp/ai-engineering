@@ -47,15 +47,17 @@ uv sync
 uv run uvicorn app.main:app --reload
 ```
 
-## Probar el servicio
+## Probar el servicio con la transcripción del ejercicio
 
-```bash
-curl -X POST http://localhost:8000/api/v1/estimate \
-  -H "Content-Type: application/json" \
-  -d '{
-    "transcription": "The client wants to build a mobile app for managing restaurant reservations. They need user registration, a restaurant search with filters by cuisine and location, a real-time reservation system with availability checking, push notifications for reservation confirmations and reminders, and an admin panel for restaurant owners to manage their listings and view analytics."
-  }'
+La [transcripción de ejemplo](transcripcion.json) contiene el texto de una reunión ficticia sobre una landing page con integración de HubSpot y un blog. El archivo se puede enviar directamente como cuerpo JSON a `POST /api/v1/estimate`.
+
+Con el servidor en marcha, ejecuta este comando desde `estimator` en el Símbolo del sistema de Windows:
+
+```cmd
+curl.exe --json @transcripcion.json http://127.0.0.1:8000/api/v1/estimate
 ```
+
+Desde el navegador, abre [Swagger UI](http://127.0.0.1:8000/docs), selecciona `POST /api/v1/estimate`, pulsa **Try it out**, pega el contenido completo del archivo y pulsa **Execute**. La respuesta JSON incluye `estimation`, `model`, `provider` y `usage`.
 
 ## Estructura del proyecto
 
@@ -76,6 +78,7 @@ estimator/
 │   └── test_health.py      # Tests basicos
 ├── Dockerfile              # Build multi-stage con uv
 ├── docker-compose.yml      # Configuracion para desarrollo local
+├── transcripcion.json     # Entrada de ejemplo para POST /api/v1/estimate
 └── pyproject.toml          # Dependencias y configuracion
 ```
 
