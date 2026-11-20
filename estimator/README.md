@@ -1,51 +1,33 @@
-# Estimator CAG - Servicio de Estimacion de Software con IA
+# Estimator CAG
 
-Servicio de estimacion de proyectos de software impulsado por IA, utilizando una arquitectura **Cache Augmented Generation (CAG)**.
+API FastAPI que recibe una transcripción de reunión y devuelve una estimación de software generada por OpenAI. El servicio incluye ejemplos de estimaciones previas en el prompt como contexto CAG.
 
-## Que es CAG y por que lo usamos
+## Configurar y arrancar el proyecto
 
-CAG (Cache Augmented Generation) es un patron de arquitectura donde el contexto relevante se inyecta directamente en el prompt del LLM como texto estatico. En esta fase del proyecto, las estimaciones de referencia se incluyen como ejemplos dentro del prompt del sistema, sin necesidad de una base de datos vectorial ni busqueda semantica.
+Necesitas `uv` y una clave de API de OpenAI. Desde el repositorio clonado, entra en `estimator` y copia `.env.example` si todavía no tienes un `.env`.
 
-Este enfoque es ideal para empezar porque:
-- Es simple de implementar y depurar
-- No requiere infraestructura adicional (ni embeddings, ni vector stores)
-- Funciona bien cuando el volumen de contexto es manejable (pocos ejemplos)
+```cmd
+cd estimator
+copy .env.example .env
+```
 
-En modulos posteriores del master, este servicio evolucionara a una arquitectura **RAG** (Retrieval Augmented Generation) con base de datos vectorial para manejar un volumen mayor de ejemplos.
+Edita `.env` y coloca tu clave en `OPENAI_API_KEY`. Estos son los valores usados en el ejercicio:
 
-## Requisitos previos
+```dotenv
+OPENAI_API_KEY=
+LLM_PROVIDER=openai
+LLM_MODEL=gpt-4o-mini
+APP_ENV=development
+LOG_LEVEL=DEBUG
+```
 
-- **Docker** y **Docker Compose** instalados
-- Una **API key** de OpenAI o Anthropic
-- Python **NO** es necesario localmente — todo se ejecuta dentro del contenedor
+Arranca la aplicación desde `estimator`:
 
-## Inicio rapido con Docker (recomendado)
-
-1. Clonar el repositorio y entrar al directorio:
-   ```bash
-   cd estimator
-   ```
-
-2. Copiar el archivo de variables de entorno y configurar las API keys:
-   ```bash
-   cp .env.example .env
-   # Editar .env y poner tu API key real
-   ```
-
-3. Construir y levantar el servicio:
-   ```bash
-   docker compose up --build
-   ```
-
-4. El servicio estara disponible en `http://localhost:8000`
-
-## Alternativa: ejecucion local sin Docker
-
-```bash
-uv sync
-# Configurar .env con tus API keys
+```cmd
 uv run uvicorn app.main:app --reload
 ```
+
+Abre [el endpoint de salud](http://127.0.0.1:8000/health) para comprobar que el servicio devuelve `status: healthy`.
 
 ## Probar el servicio con la transcripción del ejercicio
 
@@ -59,36 +41,39 @@ curl.exe --json @transcripcion.json http://127.0.0.1:8000/api/v1/estimate
 
 Desde el navegador, abre [Swagger UI](http://127.0.0.1:8000/docs), selecciona `POST /api/v1/estimate`, pulsa **Try it out**, pega el contenido completo del archivo y pulsa **Execute**. La respuesta JSON incluye `estimation`, `model`, `provider` y `usage`.
 
+### Respuesta obtenida
+
+```json
+{
+  "estimation": "## Landing Page con Formulario de Contacto e Integración con CRM\n\n### Task Breakdown\n\n| Task | Hours | Cost (EUR) |\n|------|------:|------------|\n| Revisión de requisitos y análisis de UX | 8 | 500 |\n| Adaptación del diseño de Figma a código | 16 | 800 |\n| Implementación del formulario de contacto | 10 | 625 |\n| Integración con el CRM de HubSpot | 14 | 875 |\n| Desarrollo de la sección de blog con editor WYSIWYG | 24 | 1,500 |\n| Configuración y pruebas de SEO básico | 8 | 500 |\n| Pruebas de funcionalidad y corrección de errores | 12 | 750 |\n| Documentación y despliegue final | 6 | 375 |\n\n### Totals\n\n- **Total hours:** 98\n- **Total cost:** 6,425 EUR\n\n### Recommended Team\n\n- 1 Desarrollador Frontend Senior\n- 1 Diseñador UI/UX (parte del tiempo durante la primera semana)\n\n### Estimated Duration\n\n**4 semanas**, asumiendo acceso a las credenciales de HubSpot e infraestructura necesaria para el despliegue.",
+  "model": "gpt-4o-mini-2024-07-18",
+  "provider": "openai",
+  "usage": {
+    "input_tokens": 1774,
+    "output_tokens": 254,
+    "total_tokens": 2028
+  }
+}
+```
+
+Las partidas suman 98 horas y 5.925 EUR. El modelo informó un coste total de 6.425 EUR.
+
 ## Estructura del proyecto
 
 ```
 estimator/
 ├── app/
-│   ├── main.py            # Aplicacion FastAPI, health check, CORS
-│   ├── config.py           # Configuracion con Pydantic Settings
+│   ├── main.py            # Aplicación FastAPI y endpoint de salud
+│   ├── config.py          # Configuración con Pydantic Settings
 │   ├── routers/
 │   │   └── estimations.py  # Endpoint POST /api/v1/estimate
 │   ├── services/
-│   │   └── llm_service.py  # Logica de negocio, llamadas al LLM
+│   │   └── llm_service.py # Construcción del prompt y llamada al LLM
 │   ├── schemas/
 │   │   └── estimation.py   # Modelos Pydantic (request/response)
 │   └── context/
-│       └── examples.py     # Ejemplos de estimacion (contexto CAG)
-├── tests/
-│   └── test_health.py      # Tests basicos
-├── Dockerfile              # Build multi-stage con uv
-├── docker-compose.yml      # Configuracion para desarrollo local
+│       └── examples.py    # Ejemplos de estimación para el contexto CAG
+├── .env.example           # Variables de entorno del proyecto
 ├── transcripcion.json     # Entrada de ejemplo para POST /api/v1/estimate
-└── pyproject.toml          # Dependencias y configuracion
+└── pyproject.toml          # Dependencias del proyecto
 ```
-
-## Documentacion interactiva
-
-Con el servicio corriendo, accede a la documentacion Swagger UI en:
-
-- **Swagger UI:** [http://localhost:8000/docs](http://localhost:8000/docs)
-- **ReDoc:** [http://localhost:8000/redoc](http://localhost:8000/redoc)
-
----
-
-> Este proyecto forma parte del **Master en AI Engineering** y servira como base para evolucionar hacia una arquitectura RAG con base de datos vectorial en modulos posteriores.
