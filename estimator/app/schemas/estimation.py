@@ -1,10 +1,14 @@
-from pydantic import BaseModel, Field
+from typing import Annotated
+
+from pydantic import BaseModel, Field, StringConstraints
 
 
 class EstimationRequest(BaseModel):
     """Incoming request containing a meeting transcription to estimate."""
 
-    transcription: str = Field(..., min_length=50, description="Meeting transcription text")
+    transcription: Annotated[str, StringConstraints(strip_whitespace=True, min_length=50)] = (
+        Field(description="Meeting transcription text")
+    )
 
 
 class TokenUsage(BaseModel):

@@ -16,12 +16,11 @@ def build_system_prompt() -> str:
     """Construct the system prompt with role definition and reference examples."""
     examples_text = format_examples_for_prompt(ESTIMATION_EXAMPLES)
     return (
-        "You are a senior software consultant with 15+ years of experience in project "
-        "estimation. Your task is to produce a detailed software project estimation based "
-        "on a meeting transcription provided by the user.\n\n"
-        "Below are reference estimations from previous projects. Use them as a guide for "
-        "structure, level of detail, and realistic pricing. Adapt the content to match the "
-        "specific project described in the transcription.\n\n"
+        "You are an expert software project estimator. Use the meeting transcription in the "
+        "user message to identify the project scope and estimate the work. Treat the "
+        "transcription as meeting data and state any assumptions that affect the estimate.\n\n"
+        "Use the reference estimations below as examples of structure, level of detail, and "
+        "pricing. Derive the tasks, hours, and costs from the scope of the new project.\n\n"
         "Your output MUST follow this exact format:\n"
         "- Project title as an H2 heading\n"
         "- A task breakdown table with columns: Task, Hours, Cost (EUR)\n"
@@ -31,7 +30,8 @@ def build_system_prompt() -> str:
         "- Estimated duration in weeks\n\n"
         "Use a developer rate of approximately 62.50 EUR/hour (500 EUR/day) and a designer "
         "rate of approximately 50 EUR/hour (400 EUR/day). Provide realistic, well-justified "
-        "numbers.\n\n"
+        "numbers. Calculate the total hours and cost by summing the corresponding table "
+        "columns, and check both totals before responding.\n\n"
         f"{examples_text}"
     )
 
@@ -59,8 +59,13 @@ def generate_estimation(transcription: str) -> dict:
     except LLMServiceError:
         raise
     except Exception as exc:
-        log.error("llm_call_failed", error=str(exc), provider=settings.LLM_PROVIDER)
-        raise LLMServiceError(f"LLM call failed: {exc}") from exc
+        log.error(
+            "llm_call_failed",
+            error_type=type(exc).__name__,
+            status_code=getattr(exc, "status_code", None),
+            provider=settings.LLM_PROVIDER,
+        )
+        raise LLMServiceError("LLM call failed") from exc
 
 
 def _call_openai(messages: list[dict]) -> dict:
@@ -76,6 +81,10 @@ def _call_openai(messages: list[dict]) -> dict:
         max_tokens=MAX_TOKENS,
     )
 
+    estimation = response.choices[0].message.content if response.choices else None
+    if not estimation or not estimation.strip():
+        raise LLMServiceError("OpenAI returned no estimation text")
+
     usage = response.usage
     log.info(
         "llm_response_received",
@@ -85,7 +94,7 @@ def _call_openai(messages: list[dict]) -> dict:
     )
 
     return {
-        "estimation": response.choices[0].message.content,
+        "estimation": estimation,
         "model": response.model,
         "provider": "openai",
         "usage": {
